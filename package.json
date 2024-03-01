@@ -1,0 +1,12 @@
+{
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node ./index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.12.1",
+    "dotenv": "^16.4.5",
+    "mysql": "^2.18.1"
+  }
+}
