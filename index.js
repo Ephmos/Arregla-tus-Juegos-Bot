@@ -57,8 +57,8 @@ connection.getConnection(function(err, connection){
 });
 
 
-client.commands = new Collection();
 // Logic Array of commands that the bot gonna process below
+client.commands = new Collection();
 const commands = [];
 const commandsFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
 
@@ -67,9 +67,7 @@ const commandsFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith(
 
 for (const file of commandsFiles) {
     const command = await import(`./commands/${file}`);
-
-    console.log(command.data);
-    
+        
     if ('data' in command && 'execute' in command) {
         commands.push(command.data.toJSON());
     } else {
@@ -89,7 +87,6 @@ const rest = new REST({ version: '10' }).setToken(process.env.SECRET_TOKEN);
         console.error(error);
     }
 
-
 client.on('ready', () => {
     console.log(`${actionTimeRegister(`Bot de Arregla tus Juegos inicializado (?)`)}`);
     client.user.setPresence({activities: [{name: `Unpacking y contando ${client.users.cache.size} decoraciones`}], status: 'online'})
@@ -98,7 +95,7 @@ client.on('ready', () => {
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
     const command = interaction.client.commands.get(interaction.commandName);
-
+    
     if (!command) {
         console.error(`No command matching ${interaction.commandName} was found.`);
         return;
