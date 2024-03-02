@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, Collection, REST, Routes, Events } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
 import { createPool } from 'mysql';
 import fs from 'fs';
 
@@ -56,48 +56,53 @@ connection.getConnection(function(err, connection){
     console.log(`${actionTimeRegister(`Conexión a la base de datos realizada correctamente...`)}`)
 });
 
+// DON' DELETE THIS FROM THE CODE
+// https://stackoverflow.com/questions/74451341/how-to-convert-require-to-import-within-for-loop
 
 // Logic Array of commands that the bot gonna process below
 client.commands = new Collection();
 const commands = [];
-const commandsFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync(`./commands`).filter(file => file.endsWith('.js'));
 
-// DON' DELETE THIS FROM THE CODE
-// https://stackoverflow.com/questions/74451341/how-to-convert-require-to-import-within-for-loop
-
-for (const file of commandsFiles) {
+for (const file of commandFiles) {
     const command = await import(`./commands/${file}`);
-        
     if ('data' in command && 'execute' in command) {
         commands.push(command.data.toJSON());
+        client.commands.set(command.data.name, command);
     } else {
-        console.log(`[WARNING] The command at ${command.data.name} is missing a required "data" or "execute" property.`);
+        console.log(`[WARNING] El comando ${command.data.name} tiene propiedades de "data" o "execute" inválidas.`);
     }
 }
 
-const rest = new REST({ version: '10' }).setToken(process.env.SECRET_TOKEN);
+const rest = new REST({version: '10'}).setToken(process.env.SECRET_TOKEN);
 
-    try {
-        console.log(`${actionTimeRegister(`Inicio de refresco de los comandos de la aplicación (/).`)}`);
-        await rest.put(Routes.applicationCommands(process.env.CLIENT_ID/*, process.env.GUILD_ID*/), { body: commands });
-        
-        console.log(commands);
-        console.log(`${actionTimeRegister(`Refresco de comandos de la aplicación realizado correctamente (/).`)}`);
-        } catch (error) {
-        console.error(error);
-    }
+// and deploy your commands!
+(async () => {
+	try {
+		console.log(`${actionTimeRegister(`Se inició el refresco de ${commands.length} comandos de la aplicación (/).`)}`);
+
+		// The put method is used to fully refresh all commands in the guild with the current set
+		const data = await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),{ body: commands },);
+		console.log(`${actionTimeRegister(`Refresco de ${data.length} comandos de la aplicación realizado con éxito (/).`)}`);
+	} catch (error) {
+		// And of course, make sure you catch and log any errors!
+		console.error(error);
+	}
+})();
 
 client.on('ready', () => {
+    //const guild = client.guilds.cache.get(process.env.GUILD_ID);
+    //guild.commands.set([]);
     console.log(`${actionTimeRegister(`Bot de Arregla tus Juegos inicializado (?)`)}`);
     client.user.setPresence({activities: [{name: `Unpacking y contando ${client.users.cache.size} decoraciones`}], status: 'online'})
 });
 
-client.on(Events.InteractionCreate, async interaction => {
+client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
     const command = interaction.client.commands.get(interaction.commandName);
-    
+
     if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
+        console.error(`${actionTimeRegister(`No hay un comando que concuerde con: ${interaction.commandName}.`)}`);
         return;
     }
 
@@ -106,9 +111,9 @@ client.on(Events.InteractionCreate, async interaction => {
     } catch (error) {
         console.error(error);
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+            await interaction.followUp({ content: `¡Ha habido un error mientras ejecutabas este comando!`, ephemeral: true });
         } else {
-            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+            await interaction.reply({ content: `¡Ha habido un error mientras ejecutabas este comando!`, ephemeral: true });
         }
     }
 });
