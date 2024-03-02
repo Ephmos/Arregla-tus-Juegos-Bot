@@ -70,7 +70,7 @@ for (const file of commandFiles) {
         commands.push(command.data.toJSON());
         client.commands.set(command.data.name, command);
     } else {
-        console.log(`[WARNING] El comando ${command.data.name} tiene propiedades de "data" o "execute" inválidas.`);
+        console.log(`El comando ${command.data.name} tiene propiedades de "data" o "execute" inválidas.`);
     }
 }
 
@@ -79,10 +79,21 @@ const rest = new REST({version: '10'}).setToken(process.env.SECRET_TOKEN);
 // and deploy your commands!
 (async () => {
 	try {
-		console.log(`${actionTimeRegister(`Se inició el refresco de ${commands.length} comandos de la aplicación (/).`)}`);
+        const data = await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),{ body: commands },);
+        if (commands.length == 0) 
+            console.log(`${actionTimeRegister(`No se inició ningún comando de aplicación`)}`);
+
+        else if (commands.length == 1)
+            console.log(`${actionTimeRegister(`Se inició el refresco de ${commands.length} comando de la aplicación (/).`)}`);
+
+        else if (commands.length >= 2)
+            console.log(`${actionTimeRegister(`Se inició el refresco de ${commands.length} comandos de la aplicación (/).`)}`);
 
 		// The put method is used to fully refresh all commands in the guild with the current set
-		const data = await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),{ body: commands },);
+        if (data.length == 1)
+        console.log(`${actionTimeRegister(`Refresco de ${data.length} comando de la aplicación realizado con éxito (/).`)}`);
+
+        else if (data.length >=2)
 		console.log(`${actionTimeRegister(`Refresco de ${data.length} comandos de la aplicación realizado con éxito (/).`)}`);
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!
@@ -91,8 +102,6 @@ const rest = new REST({version: '10'}).setToken(process.env.SECRET_TOKEN);
 })();
 
 client.on('ready', () => {
-    //const guild = client.guilds.cache.get(process.env.GUILD_ID);
-    //guild.commands.set([]);
     console.log(`${actionTimeRegister(`Bot de Arregla tus Juegos inicializado (?)`)}`);
     client.user.setPresence({activities: [{name: `Unpacking y contando ${client.users.cache.size} decoraciones`}], status: 'online'})
 });
